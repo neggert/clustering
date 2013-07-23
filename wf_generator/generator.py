@@ -36,4 +36,4 @@ def generate(param_fcn, waveform_fcn, transform_fcn, **kwargs):
 
     wf = transform_fcn(wf, **transform_kwargs)
 
-    return wf
+    return x0, y0, t0, wf
