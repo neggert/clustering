@@ -28,7 +28,7 @@ def gaussian_beta(x0, y0, t0, amplitude, xwidth, ywidth):
 
     x, y, t = make_coords()
 
-    wf = scipy.stats.gamma.pdf(t, 1.4, loc=t0, scale=0.3)
+    wf = scipy.stats.gamma.pdf(t, 1.4, loc=t0, scale=5.)
     wf *= amplitude
     wf *= scipy.stats.norm.pdf(x, loc=x0, scale=xwidth)
     wf *= scipy.stats.norm.pdf(y, loc=y0, scale=ywidth)
