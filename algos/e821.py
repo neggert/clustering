@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def fit_waveform(wf, thresh_frac=0.3, count_limit=5):
+def fit_waveform(wf, thresh_frac=0.3, count_limit=6):
     """
     Fit a waveform. Decides whether there are 1 or two signals present
     by counting the number of time samples above a threshold. Sums over
@@ -29,3 +29,9 @@ def fit_waveform(wf, thresh_frac=0.3, count_limit=5):
         return ((None, None, None), (None, None, None))
     else:
         return ((None, None, None), )
+
+if __name__ == '__main__':
+    import gm2_clustering
+
+    gm2_clustering.algo_tests.one_vs_two(fit_waveform, gm2_clustering.wf_generator.baseline,
+                                         gm2_clustering.wf_generator.baseline_two)
