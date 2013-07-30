@@ -1,7 +1,7 @@
 import params
 import waveforms
 import transform
-from generator import generate
+from generator import generate, generate_two
 from functools import partial
 
 
