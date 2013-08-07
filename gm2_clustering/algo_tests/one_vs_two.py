@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 
-def one_vs_two(fit_func, generate_one, generate_two):
+def one_vs_two(fit_func, data_file):
     """
     Test performance of an algorithm at distinguishing one-electron
     events from two-electron events.
@@ -26,30 +26,32 @@ def one_vs_two(fit_func, generate_one, generate_two):
         and time.
     """
 
-    n_one_tries = 100000
+    n_one_tries = 0
     n_one_correct = 0
-    for _ in xrange(n_one_tries):
-        params, wf = generate_one()
-        n = len(fit_func(wf))
-        if n == 1:
-            n_one_correct += 1
 
-    print("False-positive rate: {}".format(1-1.*n_one_correct/n_one_tries))
-
-    n_two_tries = 100000
     incorrect_dr, total_dr = [], []
     incorrect_dt, total_dt = [], []
 
-    for _ in xrange(n_two_tries):
-        p1, p2, wf = generate_two()
-        n = len(fit_func(wf))
-        dr = math.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
-        dt = abs(p1[2]-p2[2])
-        if n < 2:
-            incorrect_dr.append(dr)
-            incorrect_dt.append(dt)
-        total_dr.append(dr)
-        total_dt.append(dt)
+    with np.load(data_file) as data:
+        for line in data['one']:
+            params, wf = line
+            n = len(fit_func(wf))
+            if n == 1:
+                n_one_correct += 1
+            n_one_tries += 1
+
+        for line in data['two']:
+            p1, p2, wf = line
+            n = len(fit_func(wf))
+            dr = math.sqrt((p1[0]-p2[0])**2+(p1[1]-p2[1])**2)
+            dt = abs(p1[2]-p2[2])
+            if n < 2:
+                incorrect_dr.append(dr)
+                incorrect_dt.append(dt)
+            total_dr.append(dr)
+            total_dt.append(dt)
+
+    print("False-positive rate: {}".format(1-1.*n_one_correct/n_one_tries))
 
     total_count, bin_x, bin_y = np.histogram2d(total_dr, total_dt, bins=(16, 50))
     incorrect_count, bin_x, bin_y = np.histogram2d(incorrect_dr, incorrect_dt, bins=[bin_x, bin_y])
@@ -61,4 +63,4 @@ def one_vs_two(fit_func, generate_one, generate_two):
     cb = plt.colorbar()
     cb.set_label("False-negative rate")
     plt.show()
-    # raw_input()
+    raw_input()

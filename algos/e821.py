@@ -33,5 +33,10 @@ def fit_waveform(wf, thresh_frac=0.3, count_limit=6):
 if __name__ == '__main__':
     import gm2_clustering
 
-    gm2_clustering.algo_tests.one_vs_two(fit_waveform, gm2_clustering.wf_generator.baseline,
-                                         gm2_clustering.wf_generator.baseline_two)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("data_file", help="File in which waveforms are stored")
+
+    args = parser.parse_args()
+
+    gm2_clustering.algo_tests.one_vs_two(fit_waveform, args.data_file)
