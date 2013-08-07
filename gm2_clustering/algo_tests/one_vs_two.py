@@ -26,7 +26,7 @@ def one_vs_two(fit_func, generate_one, generate_two):
         and time.
     """
 
-    n_one_tries = 10
+    n_one_tries = 100000
     n_one_correct = 0
     for _ in xrange(n_one_tries):
         params, wf = generate_one()
@@ -36,7 +36,7 @@ def one_vs_two(fit_func, generate_one, generate_two):
 
     print("False-positive rate: {}".format(1-1.*n_one_correct/n_one_tries))
 
-    n_two_tries = 10000
+    n_two_tries = 100000
     incorrect_dr, total_dr = [], []
     incorrect_dt, total_dt = [], []
 
@@ -61,4 +61,4 @@ def one_vs_two(fit_func, generate_one, generate_two):
     cb = plt.colorbar()
     cb.set_label("False-negative rate")
     plt.show()
-    raw_input()
+    # raw_input()

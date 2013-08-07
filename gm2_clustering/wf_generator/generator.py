@@ -30,13 +30,14 @@ def generate(param_fcn, waveform_fcn, transform_fcn, **kwargs):
     transform_kwargs = {name: val for name, val in kwargs.iteritems()
                         if name in inspect.getargspec(transform_fcn)[0]}
 
-    x0, y0, t0 = param_fcn(**param_kwargs)
+    while True:
+        x0, y0, t0 = param_fcn(**param_kwargs)
 
-    wf = waveform_fcn(x0, y0, t0, **wf_kwargs)
+        wf = waveform_fcn(x0, y0, t0, **wf_kwargs)
 
-    wf = transform_fcn(wf, **transform_kwargs)
+        wf = transform_fcn(wf, **transform_kwargs)
 
-    return (x0, y0, t0), wf
+        yield (x0, y0, t0), wf
 
 
 def generate_two(param_fcn, waveform_fcn, transform_fcn, **kwargs):
@@ -68,14 +69,15 @@ def generate_two(param_fcn, waveform_fcn, transform_fcn, **kwargs):
     transform_kwargs = {name: val for name, val in kwargs.iteritems()
                         if name in inspect.getargspec(transform_fcn)[0]}
 
-    x0a, y0a, t0a = param_fcn(**param_kwargs)
+    while True:
+        x0a, y0a, t0a = param_fcn(**param_kwargs)
 
-    wf = waveform_fcn(x0a, y0a, t0a, **wf_kwargs)
+        wf = waveform_fcn(x0a, y0a, t0a, **wf_kwargs)
 
-    x0b, y0b, t0b = param_fcn(**param_kwargs)
+        x0b, y0b, t0b = param_fcn(**param_kwargs)
 
-    wf += waveform_fcn(x0b, y0b, t0b, **wf_kwargs)
+        wf += waveform_fcn(x0b, y0b, t0b, **wf_kwargs)
 
-    wf = transform_fcn(wf, **transform_kwargs)
+        wf = transform_fcn(wf, **transform_kwargs)
 
-    return (x0a, y0a, t0a), (x0b, y0b, t0b), wf
+        yield (x0a, y0a, t0a), (x0b, y0b, t0b), wf
