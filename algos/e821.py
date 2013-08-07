@@ -1,3 +1,8 @@
+"""
+Attempt to mock-up the pileup algorithm used in E821. Completely ignores
+spatial information and counts the number if times samples above threshold
+"""
+
 import numpy as np
 
 
