@@ -6,6 +6,7 @@ import scipy.signal
 import numpy as np
 from numba import autojit
 
+
 @autojit
 def get_local_maxima(wf):
     """Find the indices of any local maxima"""
@@ -14,12 +15,12 @@ def get_local_maxima(wf):
     for i in xrange(imax):
         for j in xrange(jmax):
             for k in xrange(kmax):
-                x = wf[i,j,k]
+                x = wf[i, j, k]
                 surrounding = wf[max([i-1, 0]):min([i+2, imax]),
                                  max([j-1, 0]):min([j+2, jmax]),
                                  max([k-1, 0]):min([k+2, kmax])]
                 if np.max(surrounding) == x and x > 1:
-                    results.append((i,j,k)) 
+                    results.append((i, j, k))
     return results
 
 
@@ -46,6 +47,11 @@ def automaton_iteration(tags):
 
 
 def initialize_tags(wf, threshold):
+    """
+    Get local maxima to start the propagation and set
+    entries below the noise floor to -1
+    """
+
     maxima = get_local_maxima(wf)
 
     # hack to initialize a numpy array of sets
@@ -59,6 +65,10 @@ def initialize_tags(wf, threshold):
 
 
 def automaton(wf, threshold):
+    """
+    Grow calorimeter clusters using a cellular automaton.
+    Work in progress
+    """
 
     # generate the starting tags
     tags = initialize_tags(wf, threshold)
@@ -70,7 +80,13 @@ def automaton(wf, threshold):
         tags[:] = automaton_iteration(tags)
     return tags
 
+
 def fit_waveform(wf, threshold=1.):
+    """
+    Fit the waveform. Currently just want to see if there are one or two
+    clusters
+    """
+
     clusters = automaton(wf, threshold)
     all_clusters = reduce(set.union, clusters[clusters != -1].ravel(), set())
     if len(all_clusters) > 2:
