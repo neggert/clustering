@@ -34,7 +34,9 @@ def automaton_iteration(tags):
         for j in xrange(jmax):
             for k in xrange(kmax):
                 tag = tags[i, j, k]
-                if tag == -1:  # yes, this doesn't follow P
+                if tag == -1:
+                    continue
+                elif len(tag) > 0:
                     continue
                 surrounding = tags[max([i-1, 0]):min([i+2, imax]),
                                    max([j-1, 0]):min([j+2, jmax]),
@@ -89,7 +91,7 @@ def fit_waveform(wf, threshold=1.):
 
     clusters = automaton(wf, threshold)
     all_clusters = reduce(set.union, clusters[clusters != -1].ravel(), set())
-    if len(all_clusters) > 2:
+    if len(all_clusters) > 1:
         return ((None, None, None), (None, None, None))
     else:
         return ((None, None, None),)
