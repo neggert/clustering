@@ -4,11 +4,12 @@ Clustering using cellular automaton
 
 import scipy.signal
 import numpy as np
+import numpy.ma as ma
 from numba import autojit
 
 
 @autojit
-def get_local_maxima(wf):
+def get_local_maxima(wf, threshold=200):
     """Find the indices of any local maxima"""
     imax, jmax, kmax = wf.shape
     results = []
@@ -19,7 +20,7 @@ def get_local_maxima(wf):
                 surrounding = wf[max([i-1, 0]):min([i+2, imax]),
                                  max([j-1, 0]):min([j+2, jmax]),
                                  max([k-1, 0]):min([k+2, kmax])]
-                if np.max(surrounding) == x and x > 1:
+                if np.max(surrounding) == x and x > threshold:
                     results.append((i, j, k))
     return results
 
@@ -48,13 +49,13 @@ def automaton_iteration(tags):
     return tags
 
 
-def initialize_tags(wf, threshold):
+def initialize_tags(wf, threshold, seed_threshold=200):
     """
     Get local maxima to start the propagation and set
     entries below the noise floor to -1
     """
 
-    maxima = get_local_maxima(wf)
+    maxima = get_local_maxima(wf, seed_threshold)
 
     # hack to initialize a numpy array of sets
     lister = np.frompyfunc(lambda x: set(), 1, 1)
@@ -81,6 +82,39 @@ def automaton(wf, threshold):
         tag_last[:] = tags
         tags[:] = automaton_iteration(tags)
     return tags
+
+
+def _has_tag(x, y):
+    if x == -1:
+        return False
+    else:
+        return y in x
+
+
+_has_tag_obj = np.frompyfunc(_has_tag, 2, 1)
+
+
+def has_tag(tags, itag):
+    """Return boolean array indicating whether each tags entry contains itag"""
+    return _has_tag_obj(tags, itag).astype(np.bool)
+
+
+def get_clusters(wf, threshold):
+    """
+    Generator over clusters. Each cluster is the whole waveform array, with only 
+    the crystals in that cluster unmasked.
+    """
+
+    tags = automaton(wf, threshold)
+    all_clusters = reduce(set.union, tags[tags != -1].ravel(), set())
+
+    masked_wf = wf.view(ma.MaskedArray)
+    masked_wf.fill_value = 0.
+    for icluster in all_clusters:
+        masked_wf.mask = False  # unmask everything
+        masked_wf[~has_tag(tags, icluster)] = ma.masked
+
+        yield masked_wf
 
 
 def fit_waveform(wf, threshold=1.):
