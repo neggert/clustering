@@ -7,6 +7,8 @@ import numpy.ma as ma
 import scipy.stats
 import scipy.optimize
 
+import algos.automaton as ca
+
 
 def make_coords():
     """
@@ -68,14 +70,14 @@ def profile_chi2_one_pulse(wf):
     # initial guesses
     # just pick the maximum
     yinit, xinit, tinit = np.unravel_index(np.argmax(wf), wf.shape)
-    Ainit, xwinit, ywinit = 1000, 1, 1
+    Ainit = np.sum(wf)*3
+    xwinit, ywinit = 1, 1
 
     result, _, info, mesg, ier = scipy.optimize.leastsq(func_to_minimize,
                                                         x0=(xinit, yinit, tinit, Ainit, xwinit, ywinit),
                                                         full_output=1
                                                         )
-    print result, xinit, yinit, tinit, chi2_one_pulse(wf, result)
-    return chi2_one_pulse(wf, result)
+    return chi2_one_pulse(wf, result)/wf[-wf.mask].shape[0]
 
 
 def profile_chi2_two_pulse(wf):
@@ -128,8 +130,8 @@ def get_one_pulse_llr_dist(filename, n):
     with np.load(filename) as data:
         for datum in data['one'][:n]:
             params, wf = datum
-            print params
-            llr = get_llr(wf)
+            cluster = ca.get_clusters(wf, 1.).next()
+            llr = get_llr(cluster)
             llrs.append(llr)
 
     return llrs
@@ -143,3 +145,6 @@ def get_two_pulse_llr_dist(filename, n):
             llrs.append(llr)
 
     return llrs
+
+if __name__ == '__main__':
+    get_one_pulse_llr_dist("test.npz", 100)
