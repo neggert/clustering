@@ -1,4 +1,4 @@
-import matplotlib.pylab as plt
+import matplotlib.pyplot as plt
 from gm2_clustering.wf_generator import *
 import math
 import numpy as np
@@ -53,11 +53,12 @@ def one_vs_two(fit_func, data_file):
 
     print("False-positive rate: {}".format(1-1.*n_one_correct/n_one_tries))
 
-    total_count, bin_x, bin_y = np.histogram2d(total_dr, total_dt, bins=(16, 50))
+    total_count, bin_x, bin_y = np.histogram2d(total_dr, total_dt, bins=(4,20))
     incorrect_count, bin_x, bin_y = np.histogram2d(incorrect_dr, incorrect_dt, bins=[bin_x, bin_y])
-
+    ratio = 1.*incorrect_count/total_count
+    ratio[np.isnan(ratio)] = 0.
     extent = [bin_y[0], bin_y[-1], bin_x[0], bin_x[-1]]
-    plt.imshow(1.*incorrect_count/total_count, extent=extent, interpolation='nearest', aspect='auto', origin='lower')
+    plt.imshow(ratio, extent=extent, interpolation='nearest', aspect='auto', origin='lower')
     plt.ylabel(r"$\Delta R$ (crystals)")
     plt.xlabel(r"$\Delta t$ (ns)")
     cb = plt.colorbar()
