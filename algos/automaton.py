@@ -74,7 +74,7 @@ def automaton(wf, threshold):
     """
 
     # generate the starting tags
-    tags = initialize_tags(wf, threshold)
+    tags = initialize_tags(wf, threshold, 200)
 
     # run the automaton until it converges
     tag_last = np.zeros(wf.shape, dtype=np.object)
@@ -117,13 +117,29 @@ def get_clusters(wf, threshold):
         yield masked_wf
 
 
+def make_time_island(wf, threshold=50, window=5):
+    ts = np.sum(wf, axis=(0, 1))
+    count = len(ts[ts > threshold])
+    while count < 3:
+        threshold /= 2.
+        count = len(ts[ts > threshold])
+    t_min = np.min(np.arange(ts.shape[0])[ts > threshold]) - window
+    t_max = np.min(np.arange(ts.shape[0])[ts > threshold]) + window
+    if t_min < 0:
+        t_min = 0
+    if t_max > len(ts):
+        t_max = len(ts)
+    return t_min, wf[:, :, t_min:t_max]
+
+
 def fit_waveform(wf, threshold=1.):
     """
     Fit the waveform. Currently just want to see if there are one or two
     clusters
     """
 
-    clusters = automaton(wf, threshold)
+    time_offset, trimmed_wf = make_time_island(wf)
+    clusters = automaton(trimmed_wf, threshold)
     all_clusters = reduce(set.union, clusters[clusters != -1].ravel(), set())
     if len(all_clusters) > 1:
         return ((None, None, None), (None, None, None))
