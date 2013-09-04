@@ -6,6 +6,7 @@ import scipy.signal
 import numpy as np
 import numpy.ma as ma
 from numba import autojit
+from copy import deepcopy
 
 
 @autojit
@@ -31,6 +32,7 @@ def automaton_iteration(tags):
     Do one iteration of the automaton
     """
     imax, jmax, kmax = tags.shape
+    start_tags = deepcopy(tags)
     for i in xrange(imax):
         for j in xrange(jmax):
             for k in xrange(kmax):
@@ -39,13 +41,14 @@ def automaton_iteration(tags):
                     continue
                 elif len(tag) > 0:
                     continue
-                surrounding = tags[max([i-1, 0]):min([i+2, imax]),
-                                   max([j-1, 0]):min([j+2, jmax]),
-                                   max([k-1, 0]):min([k+2, kmax])]
                 # look for neighboring tags
-                neighbor_tags = reduce(set.union, surrounding[surrounding != -1].ravel(), set())
+                neighbor_tags = set()
+                for ii in xrange(max([i-1, 0]), min([i+2, imax])):
+                    for jj in xrange(max([j-1, 0]), min([j+2, jmax])):
+                        for kk in xrange(max([k-1, 0]), min([k+2, kmax])):
+                            if start_tags[ii, jj, kk] != -1:
+                                neighbor_tags.update(start_tags[ii, jj, kk])
                 tag.update(neighbor_tags)
-
     return tags
 
 
@@ -99,13 +102,17 @@ def has_tag(tags, itag):
     return _has_tag_obj(tags, itag).astype(np.bool)
 
 
-def get_clusters(wf, threshold):
+def get_clusters(wf, threshold=1):
     """
     Generator over clusters. Each cluster is the whole waveform array, with only 
     the crystals in that cluster unmasked.
     """
-
+    time_offset, trimmed_wf = make_time_island(wf)
     tags = automaton(wf, threshold)
+    return get_tagged(wf, tags)
+
+
+def get_tagged(wf, tags):
     all_clusters = reduce(set.union, tags[tags != -1].ravel(), set())
 
     masked_wf = wf.view(ma.MaskedArray)
@@ -114,7 +121,7 @@ def get_clusters(wf, threshold):
         masked_wf.mask = False  # unmask everything
         masked_wf[~has_tag(tags, icluster)] = ma.masked
 
-        yield masked_wf
+        yield ma.copy(masked_wf)
 
 
 def make_time_island(wf, threshold=50, window=5):
@@ -124,7 +131,7 @@ def make_time_island(wf, threshold=50, window=5):
         threshold /= 2.
         count = len(ts[ts > threshold])
     t_min = np.min(np.arange(ts.shape[0])[ts > threshold]) - window
-    t_max = np.min(np.arange(ts.shape[0])[ts > threshold]) + window
+    t_max = np.max(np.arange(ts.shape[0])[ts > threshold]) + 3*window
     if t_min < 0:
         t_min = 0
     if t_max > len(ts):
@@ -145,6 +152,14 @@ def fit_waveform(wf, threshold=1.):
         return ((None, None, None), (None, None, None))
     else:
         return ((None, None, None),)
+
+def test():
+    import gm2_clustering
+    data = np.load("processed_wf/test_sim.npz")
+    p1, p2, wf = data['two'][0]
+    c = get_clusters(wf)
+    gm2_clustering.plot_waveform(c.next(), c.next())
+
 
 if __name__ == '__main__':
     import gm2_clustering
