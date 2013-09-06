@@ -1,2 +1,3 @@
 import algo_tests
 import wf_generator
+from wf_plot import plot_waveform
